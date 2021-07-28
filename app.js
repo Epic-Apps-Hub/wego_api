@@ -43,7 +43,7 @@ const notificationRoute = require('./Routers/notificationRoute')
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 mongoose
-    .connect(process.env.CONNECTION_STRING, {
+    .connect("mongodb+srv://mahmoud:gCfhrzz5VDvtwZRN@cluster0.wshxs.mongodb.net/WegoDatabase?retryWrites=true&w=majority", {
         useUnifiedTopology: true,
         useNewUrlParser: true
     })

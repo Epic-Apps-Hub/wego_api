@@ -6,11 +6,14 @@ const {
     addOrder,
     getUserToPerson,
     getShopToUser,
-    getCaptainOrders
+    getCaptainOrders,
+    updateOrder
 } = require('../Controllers/order1Controller')
 Order1Router.route('/add').post(addOrder)
 
 Order1Router.route('/getUTP/:id').get(getUserToPerson)
 Order1Router.route('/getSTU/:id').get(getShopToUser)
 Order1Router.route('/captainOrders').post(getCaptainOrders)
+Order1Router.route('/:id').put(updateOrder)
+
 module.exports = Order1Router

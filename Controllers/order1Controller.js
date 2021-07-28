@@ -1,35 +1,47 @@
-const Order = require("../Models/order");
-const asyncHandler = require("../utils/asynchandler");
-const ErrorResponse = require("../utils/errorResponse");
-var FCM = require("fcm-node");
-const notification = require("../Models/notification");
+const Order = require('../Models/order')
+const asyncHandler = require('../utils/asynchandler')
+const ErrorResponse = require('../utils/errorResponse')
+var FCM = require('fcm-node')
+const notification = require('../Models/notification')
 const serverKey =
-  "AAAAEF7IeAI:APA91bES-M5i8WZncE8iXenYSGQygMkoIuzGnatTb0fFuRSOmXPWcxG2EeMauZcKQ7xl333F2B-qiXFyU37Es0MVQwGf9jOwKqLVtRcbAE2S98KzYVHggEFmOvRK3zRA_Ffh237vZUaK";
-var fcm = new FCM(serverKey);
-var geodist = require("geodist");
-var distance = require("google-distance");
-const util = require("util");
-const distancePromise = util.promisify(distance.get);
+    'AAAAEF7IeAI:APA91bES-M5i8WZncE8iXenYSGQygMkoIuzGnatTb0fFuRSOmXPWcxG2EeMauZcKQ7xl333F2B-qiXFyU37Es0MVQwGf9jOwKqLVtRcbAE2S98KzYVHggEFmOvRK3zRA_Ffh237vZUaK'
+var fcm = new FCM(serverKey)
+var geodist = require('geodist')
+var distance = require('google-distance')
+distance.apiKey = 'AIzaSyAHFcmgCyZoYYILOigaYE8G7FQCAA8vB80'
 
-distance.apiKey = "AIzaSyAHFcmgCyZoYYILOigaYE8G7FQCAA8vB80";
-exports.addOrder = asyncHandler(async (req, res, next) => {
-  const orderr = await Order.create(req.body);
-  if (!orderr) {
-    return next(ErrorResponse("an error occured", 401));
-  }
+const util = require('util')
+const captain = require('../Models/captain')
+const distancePromise = options =>
+    new Promise((resolve, reject) => {
+        distance.get(options, (err, data) => {
+            if (err) {
+                reject(err)
+            } else {
+                resolve(data)
+            }
+        })
+    })
+    //const distancePromise = util.promisify(distance.get)
 
-  let data = [];
-  if (req.files) {
-    if (req.files.photos !== null) {
-      if (req.files.photos.length > 1) {
-        try {
-          req.files.photos.forEach((element) => {
-            element.mv("./uploads/" + element.name);
+exports.addOrder = asyncHandler(async(req, res, next) => {
+    const orderr = await Order.create(req.body)
+    if (!orderr) {
+        return next(ErrorResponse('an error occured', 401))
+    }
 
-            data.push(element.name);
-          });
-          //loop all files
-          /*  forEach(keysIn(req.files.photos), key => {
+    let data = []
+    if (req.files) {
+        if (req.files.photos !== null) {
+            if (req.files.photos.length > 1) {
+                try {
+                    req.files.photos.forEach(element => {
+                            element.mv('./uploads/' + element.name)
+
+                            data.push(element.name)
+                        })
+                        //loop all files
+                        /*  forEach(keysIn(req.files.photos), key => {
             let photo = req.files.photos[key]
             console.log(photo)
 
@@ -39,148 +51,200 @@ exports.addOrder = asyncHandler(async (req, res, next) => {
             //push file details
             data.push(photo.name)
         })*/
-        } catch (err) {
-          console.log(err);
+                } catch (err) {
+                    console.log(err)
+                }
+            } else {
+                let photo = req.files.photos
+                photo.mv('./uploads/' + photo.name)
+                data.push(photo.name)
+            }
         }
-      } else {
-        let photo = req.files.photos;
-        photo.mv("./uploads/" + photo.name);
-        data.push(photo.name);
-      }
     }
-  }
 
-  await orderr.update({
-    $push: { photos: { $each: data } },
-  }); //   { $addToSet: { tags: { $each: [ "camera", "accessories" ] } } }
+    await orderr.update({
+            $push: { photos: { $each: data } }
+        }) //   { $addToSet: { tags: { $each: [ "camera", "accessories" ] } } }
 
-  await orderr.save();
-  var message = {
-    //this may vary according to the message type (single recipient, multicast, topic, et cetera)
-    to: orderr.fcm,
-    collapse_key: "your_collapse_key",
+    await orderr.save()
+    var message = {
+        //this may vary according to the message type (single recipient, multicast, topic, et cetera)
+        to: orderr.fcm,
+        collapse_key: 'your_collapse_key',
 
-    notification: {
-      title: "تم طلب الاوردر",
-      body: orderr.description,
-    },
+        notification: {
+            title: 'تم طلب الاوردر',
+            body: orderr.description
+        },
 
-    data: {
-      //you can send only notification or only data(or include both)
-      my_key: "my value",
-      my_another_key: "my another value",
-    },
-  };
-  await notification.create({
-    fcm: orderr.fcm,
-    userId: orderr.userId,
-    title: "تم طلب الاوردر",
-    message: orderr.description,
-  });
-  try {
-    fcm.send(message, function (err, response) {
-      if (err) {
-        console.log("Something has gone wrong!");
-      } else {
-        console.log("Successfully sent with response: ", response);
-      }
-    });
-  } catch (error) {
-    console.log(error);
-  }
-  res.contentType("application/json");
+        data: {
+            //you can send only notification or only data(or include both)
+            my_key: 'my value',
+            my_another_key: 'my another value'
+        }
+    }
+    await notification.create({
+        fcm: orderr.fcm,
+        userId: orderr.userId,
+        title: 'تم طلب الاوردر',
+        message: orderr.description
+    })
+    try {
+        fcm.send(message, function(err, response) {
+            if (err) {
+                console.log('Something has gone wrong!')
+            } else {
+                console.log('Successfully sent with response: ', response)
+            }
+        })
+    } catch (error) {
+        console.log(error)
+    }
 
-  res.status(200).json({
-    success: true,
-    data: orderr,
-  });
-});
 
-exports.getUserToPerson = asyncHandler(async (req, res) => {
-  const orders = await Order.find({
-    userId: req.params.id,
-    orderType: "fromUserToPerson",
-  });
-  if (!orders) {
-    return next(new ErrorResponse(`coudn't get orders for this user`, 402));
-  }
+    const captains = await captain.find({
+        location: {
+            $geoWithin: {
+                $centerSphere: [
+                    [orderr.userLat, order.userLng], 60000 / 3963
+                ]
+            }
+        }
+    })
 
-  res.status(200).send(orders);
-});
+    ///impliment sending message to each captain 
 
-exports.getShopToUser = asyncHandler(async (req, res, next) => {
-  const orders = await Order.find({
-    userId: req.params.id,
-    orderType: "fromShopToUser",
-  });
-  if (!orders) {
-    return next(new ErrorResponse(`coudn't get orders for this user`, 402));
-  }
 
-  res.status(200).send(orders);
-});
+
+
+
+
+
+
+
+
+    res.contentType('application/json')
+
+    res.status(200).json({
+        success: true,
+        data: orderr
+    })
+})
+
+exports.getUserToPerson = asyncHandler(async(req, res) => {
+    const orders = await Order.find({
+        userId: req.params.id,
+        orderType: 'fromUserToPerson'
+    })
+    if (!orders) {
+        return next(new ErrorResponse(`coudn't get orders for this user`, 402))
+    }
+
+    res.status(200).send(orders)
+})
+
+exports.getShopToUser = asyncHandler(async(req, res, next) => {
+    const orders = await Order.find({
+        userId: req.params.id,
+        orderType: 'fromShopToUser'
+    })
+    if (!orders) {
+        return next(new ErrorResponse(`coudn't get orders for this user`, 402))
+    }
+
+    res.status(200).send(orders)
+})
+
+exports.updateOrder = asyncHandler(async(req, res, next) => {
+    const order = await Order.findById(req.params.id)
+
+    if (!order) {
+        return next(new ErrorResponse('order not found', 404))
+    }
+    const newOrder = await order.update(req.body)
+    if (!newOrder) {
+        return next(new ErrorResponse('an error occured', 401))
+    }
+    res.status(200).json({
+        success: true,
+        data: newOrder
+    })
+})
 
 /**
  * refactored code
  */
-const resolveData = async (data, order, origin) => {
-  const lat2 = order.userLat;
-  const lang2 = order.userLng;
+const resolveData = async(data, order, origin) => {
+    const lat2 = order.userLat
+    const lang2 = order.userLng
 
-  const subData = await distancePromise({
-    origin,
-    destination: `${lat2},${lang2}`,
-  });
-
-  console.log(subData.distanceValue / 1000 + data.distanceValue / 1000);
-
-  if (subData.distanceValue / 1000 + data.distanceValue / 1000 < 60) {
-    return {
-      distanceToUser: subData.distanceValue,
-      distanceToShop: data.distanceValue,
-      duration: subData.durationValue + data.durationValue,
-      order: order,
-    };
-  }
-};
-
-const resolveOrder = async (order, origin) => {
-  const lat = order.recieverLat;
-  const lang = order.recieverLng;
-
-  const data = await distancePromise({
-    origin,
-    destination: `${lat},${lang}`,
-  });
-
-  if (data.distanceValue / 1000 < 60) {
-    return await resolveData(data, order, origin);
-  }
-};
-
-exports.getCaptainOrders = asyncHandler(async (req, res, next) => {
-  const origin = `${req.body.lat},${req.body.lng}`;
-  const filteredOrders = [
-    {
-      distanceToUser: 22,
-      distanceToShop: 21,
-      duration: 2442,
-      order: orders[0],
-    },
-  ];
-
-  const orders = await Order.find({ condition: "requested" });
-  await Promise.all(
-    orders.map(async (order) => {
-      if (order.orderType == "fromUserToPerson") {
-        const validOrder = await resolveOrder(order, origin);
-        console.log(validOrder || "notValid order");
-        if (validOrder) filteredOrders.push(validOrder);
-      }
+    const subData = await distancePromise({
+        origin,
+        destination: `${lat2},${lang2}`
     })
-  );
-  res.status(200).send(filteredOrders);
-});
+
+    //console.log(subData.distanceValue / 1000 + data.distanceValue / 1000)
+
+    if (subData.distanceValue / 1000 + data.distanceValue / 1000 < 60) {
+        return {
+            distanceToUser: subData.distanceValue,
+            distanceToShop: data.distanceValue,
+            duration: subData.durationValue + data.durationValue,
+            order: order
+        }
+    }
+}
+
+const resolveOrder1 = async(order, origin) => {
+    const lat = order.recieverLat
+    const lang = order.recieverLng
+
+    const data = await distancePromise({
+        origin,
+        destination: `${lat},${lang}`
+    })
+
+    if (data.distanceValue / 1000 < 60) {
+        return await resolveData(data, order, origin)
+    }
+}
+
+const resolveOrder2 = async(order, origin) => {
+    const lat = order.shopLat
+    const lang = order.shopLng
+
+    const data = await distancePromise({
+        origin,
+        destination: `${lat},${lang}`
+    })
+
+    if (data.distanceValue / 1000 < 60) {
+        return await resolveData(data, order, origin)
+    }
+}
+
+exports.getCaptainOrders = asyncHandler(async(req, res, next) => {
+    const origin = `${req.body.lat},${req.body.lng}`
+    const filteredOrders = []
+
+    const orders = await Order.find({ condition: 'requested' }).sort({
+        requestTime: -1
+    })
+    await Promise.all(
+        orders.map(async order => {
+            if (order.orderType == 'fromUserToPerson') {
+                const validOrder = await resolveOrder1(order, origin)
+                    //console.log(validOrder || 'notValid order')
+                if (validOrder) filteredOrders.push(validOrder)
+            } else if (order.orderType == 'fromShopToUser') {
+                const validOrder = await resolveOrder2(order, origin)
+                    // console.log(validOrder || 'notValid order')
+                if (validOrder) filteredOrders.push(validOrder)
+            }
+        })
+    )
+    res.status(200).send(filteredOrders)
+})
 
 // exports.getCaptainOrders = asyncHandler(async (req, res, next) => {
 //   const orders = await Order.find({ condition: "requested" });

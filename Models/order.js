@@ -52,6 +52,10 @@ const orderSchema = mongoose.Schema({
             type: Number,
             default: null
         },
+        captainId: {
+            type: String,
+            default: null
+        },
         userLat: {
             type: Number,
             required: true
@@ -77,7 +81,7 @@ const orderSchema = mongoose.Schema({
         condition: {
             type: String,
 
-            enum: ['requested', 'accepted', 'delivering', 'delivered'],
+            enum: ['requested', 'accepted', 'handed', 'delivering', 'delivered'],
             default: 'requested'
         },
         vehicle: {
@@ -97,41 +101,41 @@ const orderSchema = mongoose.Schema({
         }
     })
     /*
-    orderSchema.pre('save', async function(next) {
-        var message = {
-            //this may vary according to the message type (single recipient, multicast, topic, et cetera)
-            to: this.fcm,
-            collapse_key: 'your_collapse_key',
+        orderSchema.pre('save', async function(next) {
+            var message = {
+                //this may vary according to the message type (single recipient, multicast, topic, et cetera)
+                to: this.fcm,
+                collapse_key: 'your_collapse_key',
 
-            notification: {
-                title: 'تم طلب الاوردر',
-                body: this.description
-            },
+                notification: {
+                    title: 'تم طلب الاوردر',
+                    body: this.description
+                },
 
-            data: {
-                //you can send only notification or only data(or include both)
-                my_key: 'my value',
-                my_another_key: 'my another value'
-            }
-        }
-        await notification.create({
-            fcm: this.fcm,
-            userId: this.userId,
-            title: 'تم طلب الاوردر',
-            message: this.description
-        })
-        try {
-            fcm.send(message, function(err, response) {
-                if (err) {
-                    console.log('Something has gone wrong!')
-                } else {
-                    console.log('Successfully sent with response: ', response)
+                data: {
+                    //you can send only notification or only data(or include both)
+                    my_key: 'my value',
+                    my_another_key: 'my another value'
                 }
+            }
+            await notification.create({
+                fcm: this.fcm,
+                userId: this.userId,
+                title: 'تم طلب الاوردر',
+                message: this.description
             })
-        } catch (error) {
-            console.log(error)
-        }
-        ////add send notification using fcm messaging
-    })
-    */
+            try {
+                fcm.send(message, function(err, response) {
+                    if (err) {
+                        console.log('Something has gone wrong!')
+                    } else {
+                        console.log('Successfully sent with response: ', response)
+                    }
+                })
+            } catch (error) {
+                console.log(error)
+            }
+            ////add send notification using fcm messaging
+        })
+        */
 module.exports = mongoose.model('Order1', orderSchema)
