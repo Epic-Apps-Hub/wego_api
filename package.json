@@ -4,6 +4,7 @@
     "description": "api for wego app",
     "main": "index.js",
     "scripts": {
+        "start": "node app.js",
         "test": "echo \"Error: no test specified\" && exit 1",
         "dev": "nodemon app.js"
     },
@@ -28,5 +29,8 @@
         "nodemon": "^2.0.7",
         "socket.io": "^4.1.2",
         "underscore": "^1.13.1"
+    },
+    "engines": {
+        "node": "14.15.4"
     }
 }
