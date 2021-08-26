@@ -8,7 +8,7 @@ const {
     getitems,
 
     search
-} = require('../controllers/itemController')
+} = require('../Controllers/itemController')
 const advancedResult = require('../middleware/advancedResults')
 const shop = require('../Models/shop')
 

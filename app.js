@@ -3,7 +3,6 @@ const mongoose = require('mongoose')
 const fileUpload = require('express-fileupload')
 const cors = require('cors')
 const morgan = require('morgan')
-const itemsRouter = require('./Routers/itemsRouter')
 const bodyParser = require('body-parser');
 
 var express = require('express')
@@ -39,6 +38,7 @@ const userRouter = require('./Routers/usersRouter')
 const distanceRoute = require('./Routers/distanceRoute')
 const captainRouter = require('./Routers/captainRoute')
 const notificationRoute = require('./Routers/notificationRoute')
+const itemsRouter = require('./Routers/itemsRouter')
 
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
