@@ -26,7 +26,7 @@ var config = {
         //'log':'trace' //handy for debugging
 }
 
-const port = process.env.PORT
+const port = 5000
 app.use(cors())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
