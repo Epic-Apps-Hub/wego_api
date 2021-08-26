@@ -67,4 +67,4 @@ app.get('/', (req, res) => res.send('Hello World!'))
 app.use(errorHandler)
     //const server = require('http').createServer(app)
 
-app.listen(5000, () => console.log(`Example app listening on port 5000!`))
+app.listen(process.env.PORT || 5000, () => console.log(`app listening on port 5000!`))
