@@ -138,4 +138,4 @@ const orderSchema = mongoose.Schema({
             ////add send notification using fcm messaging
         })
         */
-module.exports = mongoose.model('Order1', orderSchema)
+module.exports = mongoose.model('Order', orderSchema)
