@@ -166,7 +166,7 @@ const run = async() => {
 
 
     app.use(bodyParser.urlencoded({ extended: false }))
-    app.listen(5000, () => {
+    app.listen(process.env.PORT || 5000, () => {
         console.log('Application is up and running under localhost:3000/admin')
     })
 }
