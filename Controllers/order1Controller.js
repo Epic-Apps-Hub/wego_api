@@ -106,7 +106,7 @@ exports.addOrder = asyncHandler(async(req, res, next) => {
         location: {
             $geoWithin: {
                 $centerSphere: [
-                    [orderr.userLat, order.userLng], 60000 / 3963
+                    [orderr.userLat, orderr.userLng], 60000 / 3963
                 ]
             }
         }
