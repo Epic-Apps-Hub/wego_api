@@ -121,7 +121,7 @@ const run = async() => {
             },
         ],
 
-        
+
 
         // resources: [shop, user, captain, order, vehicle]
     })
@@ -166,7 +166,7 @@ const run = async() => {
 
 
     app.use(bodyParser.urlencoded({ extended: false }))
-    app.listen(3000, () => {
+    app.listen(5000, () => {
         console.log('Application is up and running under localhost:3000/admin')
     })
 }
