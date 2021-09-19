@@ -76,7 +76,7 @@ const orderSchema = mongoose.Schema({
 
         price: {
             type: Number,
-            min: 100
+            //    min: 100
         },
         condition: {
             type: String,

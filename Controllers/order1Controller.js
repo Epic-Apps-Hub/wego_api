@@ -38,7 +38,7 @@ exports.addOrder = asyncHandler(async(req, res, next) => {
                     req.files.photos.forEach(element => {
                             element.mv('./uploads/' + element.name)
 
-                            data.push(element.name)
+                            data.push(req.originalUrl + element.name)
                         })
                         //loop all files
                         /*  forEach(keysIn(req.files.photos), key => {
@@ -57,7 +57,7 @@ exports.addOrder = asyncHandler(async(req, res, next) => {
             } else {
                 let photo = req.files.photos
                 photo.mv('./uploads/' + photo.name)
-                data.push(photo.name)
+                data.push(req.originalUrl + photo.name)
             }
         }
     }
