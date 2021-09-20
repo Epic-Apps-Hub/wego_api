@@ -9,18 +9,32 @@ var fcm = new FCM(serverKey)
 var geodist = require('geodist')
 var distance = require('google-distance')
 distance.apiKey = 'AIzaSyAHFcmgCyZoYYILOigaYE8G7FQCAA8vB80'
+const GoogleDistanceApi = require('google-distance-api');
 
 const util = require('util')
 const captain = require('../Models/captain')
 const distancePromise = options =>
     new Promise((resolve, reject) => {
-        distance.get(options, (err, data) => {
-            if (err) {
-                reject(err)
-            } else {
-                resolve(data)
-            }
-        })
+
+        GoogleDistanceApi.distance(
+                options,
+                (err, result) => {
+                    if (err) {
+                        reject(err)
+                    } else {
+                        console.log(result)
+                        resolve(result)
+                    }
+                }
+            )
+            /*distance.get(options, (err, data) => {
+                if (err) {
+                    reject(err)
+                } else {
+                    resolve(data)
+                }
+            })*/
+
     })
     //const distancePromise = util.promisify(distance.get)
 
@@ -178,18 +192,23 @@ const resolveData = async(data, order, origin) => {
     const lat2 = order.userLat
     const lang2 = order.userLng
 
-    const subData = await distancePromise({
-        origin,
-        destination: `${lat2},${lang2}`
-    })
+    const subData = await distancePromise(
+        /*{
+                origin,
+                destination: `${lat2},${lang2}`
+            }*/
+        {
+            key: 'AIzaSyAHFcmgCyZoYYILOigaYE8G7FQCAA8vB80',
+            origins: [origin],
+            destinations: [`${lat2},${lang2}`]
+        })
 
-    //console.log(subData.distanceValue / 1000 + data.distanceValue / 1000)
 
-    if (subData.distanceValue / 1000 + data.distanceValue / 1000 < 60) {
+    if (((subData[0].distanceValue / 1000) + (data[0].distanceValue / 1000)) < 60) {
         return {
-            distanceToUser: subData.distanceValue,
-            distanceToShop: data.distanceValue,
-            duration: subData.durationValue + data.durationValue,
+            distanceToUser: subData[0].distanceValue,
+            distanceToShop: data[0].distanceValue,
+            duration: subData[0].durationValue + data[0].durationValue,
             order: order
         }
     }
@@ -198,13 +217,19 @@ const resolveData = async(data, order, origin) => {
 const resolveOrder1 = async(order, origin) => {
     const lat = order.recieverLat
     const lang = order.recieverLng
-
-    const data = await distancePromise({
-        origin,
-        destination: `${lat},${lang}`
-    })
-
-    if (data.distanceValue / 1000 < 60) {
+    const data = await distancePromise(
+        /*{
+                origin: origin,
+                destination: `${lat},${lang}`
+            }*/
+        {
+            key: 'AIzaSyAHFcmgCyZoYYILOigaYE8G7FQCAA8vB80',
+            origins: [origin],
+            destinations: [`${lat},${lang}`]
+        })
+    console.log(data[0].distanceValue)
+    console.log((data[0].distanceValue / 1000) < 60)
+    if (data[0].distanceValue / 1000 < 60) {
         return await resolveData(data, order, origin)
     }
 }
@@ -213,20 +238,26 @@ const resolveOrder2 = async(order, origin) => {
     const lat = order.shopLat
     const lang = order.shopLng
 
-    const data = await distancePromise({
-        origin,
-        destination: `${lat},${lang}`
-    })
-
-    if (data.distanceValue / 1000 < 60) {
+    const data = await distancePromise(
+        /*{
+                origin: origin,
+                destination: `${lat},${lang}`,
+            }*/
+        {
+            key: 'AIzaSyAHFcmgCyZoYYILOigaYE8G7FQCAA8vB80',
+            origins: [origin],
+            destinations: [`${lat},${lang}`]
+        })
+    console.log(data)
+    if ((data[0].distanceValue / 1000) < 60) {
         return await resolveData(data, order, origin)
     }
 }
 
 exports.getCaptainOrders = asyncHandler(async(req, res, next) => {
     const origin = `${req.body.lat},${req.body.lng}`
+    console.log(origin)
     const filteredOrders = []
-
     const orders = await Order.find({ condition: 'requested' }).sort({
         requestTime: -1
     })
