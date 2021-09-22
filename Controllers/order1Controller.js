@@ -15,8 +15,8 @@ const util = require('util')
 const captain = require('../Models/captain')
 const distancePromise = options =>
     new Promise((resolve, reject) => {
-
-        GoogleDistanceApi.distance(
+        try {
+            GoogleDistanceApi.distance(
                 options,
                 (err, result) => {
                     if (err) {
@@ -27,13 +27,17 @@ const distancePromise = options =>
                     }
                 }
             )
-            /*distance.get(options, (err, data) => {
-                if (err) {
-                    reject(err)
-                } else {
-                    resolve(data)
-                }
-            })*/
+        } catch (error) {
+            console.log(error)
+        }
+
+        /*distance.get(options, (err, data) => {
+            if (err) {
+                reject(err)
+            } else {
+                resolve(data)
+            }
+        })*/
 
     })
     //const distancePromise = util.promisify(distance.get)
@@ -277,21 +281,31 @@ exports.getCaptainOrders = asyncHandler(async(req, res, next) => {
     res.status(200).send(filteredOrders)
 })
 
-// exports.getCaptainOrders = asyncHandler(async (req, res, next) => {
-//   const orders = await Order.find({ condition: "requested" });
-//   var filtered = new Array({
-//     distanceToUser: 22,
-//     distanceToShop: 21,
-//     duration: 2442,
-//     order: orders[0],
-//   });
-//   await Promise.all(
-//     orders.map(async (order) => {
-//       if (order.orderType == "fromUserToPerson") {
-//         const lat = order.recieverLat;
-//         const lang = order.recieverLng;
-//         const lat2 = order.userLat;
-//         const lang2 = order.userLng;
+exports.getInProgressOrders = asyncHandler(async(req, res, next) => {
+        const orders = await Order.find({
+            captainId: req.params.id
+        })
+
+        if (!orders) {
+            return next(new ErrorResponse('couldn\'t get orders', 404))
+        }
+        res.status(200).send(orders)
+    })
+    // exports.getCaptainOrders = asyncHandler(async (req, res, next) => {
+    //   const orders = await Order.find({ condition: "requested" });
+    //   var filtered = new Array({
+    //     distanceToUser: 22,
+    //     distanceToShop: 21,
+    //     duration: 2442,
+    //     order: orders[0],
+    //   });
+    //   await Promise.all(
+    //     orders.map(async (order) => {
+    //       if (order.orderType == "fromUserToPerson") {
+    //         const lat = order.recieverLat;
+    //         const lang = order.recieverLng;
+    //         const lat2 = order.userLat;
+    //         const lang2 = order.userLng;
 
 //         await distance.get(
 //           {

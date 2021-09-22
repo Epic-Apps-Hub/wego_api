@@ -1,7 +1,11 @@
 const Captain = require('../Models/captain')
 const asyncHandler = require('../utils/asynchandler')
 const ErrorResponse = require('../utils/errorResponse')
-
+var FCM = require('fcm-node')
+const notification = require('../Models/notification')
+const serverKey =
+    'AAAAEF7IeAI:APA91bES-M5i8WZncE8iXenYSGQygMkoIuzGnatTb0fFuRSOmXPWcxG2EeMauZcKQ7xl333F2B-qiXFyU37Es0MVQwGf9jOwKqLVtRcbAE2S98KzYVHggEFmOvRK3zRA_Ffh237vZUaK'
+var fcm = new FCM(serverKey)
 exports.createCaptin = asyncHandler(async(req, res, next) => {
     let cap
     console.log(req.body)
@@ -67,6 +71,41 @@ exports.updateCaptain = asyncHandler(async(req, res, next) => {
     } else {
         await cap.update(req.body)
         await cap.save()
+        if (req.body.credit) {
+            var message = {
+                //this may vary according to the message type (single recipient, multicast, topic, et cetera)
+                to: cap.fcm,
+                collapse_key: 'your_collapse_key',
+
+                notification: {
+                    title: "تحديث الرصيد",
+                    body: `تم تغيير الرصيد\nرصيدك الحالي ${req.body.credit} MRU`
+                },
+
+                data: {
+                    //you can send only notification or only data(or include both)
+                    my_key: 'my value',
+                    my_another_key: 'my another value'
+                }
+            }
+            await notification.create({
+                fcm: cap.fcm,
+                userId: cap.id,
+                title: "تحديث الرصيد",
+                message: `تم تغيير الرصيد\nرصيدك الحالي ${req.body.credit} MRU`
+            })
+            try {
+                fcm.send(message, function(err, response) {
+                    if (err) {
+                        console.log('Something has gone wrong!')
+                    } else {
+                        console.log('Successfully sent with response: ', response)
+                    }
+                })
+            } catch (error) {
+                console.log(error)
+            }
+        }
         res.status(200).send(cap)
     }
 })
