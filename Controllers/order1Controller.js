@@ -287,7 +287,7 @@ exports.getInProgressOrders = asyncHandler(async(req, res, next) => {
         })
 
         if (!orders) {
-            return next(new ErrorResponse('couldn\'t get orders', 404))
+            return res.status(200).send([])
         }
         res.status(200).send(orders)
     })
