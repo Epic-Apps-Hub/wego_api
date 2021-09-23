@@ -1,7 +1,8 @@
 const {
     createCaptin,
     getCaptain,
-    updateCaptain
+    updateCaptain,
+    updateCredit
 } = require('../Controllers/captainController')
 const express = require('express')
 
@@ -12,5 +13,5 @@ captainRouter
     .route('/:id')
     .get(getCaptain)
     .post(updateCaptain)
-
+    .put(updateCredit)
 module.exports = captainRouter

@@ -109,3 +109,24 @@ exports.updateCaptain = asyncHandler(async(req, res, next) => {
         res.status(200).send(cap)
     }
 })
+
+
+
+exports.updateCredit = asyncHandler(async(req, res, next) => {
+    var number = req.body.number
+
+    const cap = await Captain.findOne({
+        id: req.params.id
+    })
+
+
+    if (!cap) {
+        return next(new ErrorResponse("coudn't find user", 403))
+    } else {
+        await cap.update({
+            credit: cap.credit + number
+        })
+        await cap.save()
+        res.status(200).send(cap)
+    }
+})

@@ -4,62 +4,58 @@ const ErrorResponse = require('../utils/errorResponse')
 var FCM = require('fcm-node')
 const notification = require('../Models/notification')
 const serverKey =
-    'AAAAEF7IeAI:APA91bES-M5i8WZncE8iXenYSGQygMkoIuzGnatTb0fFuRSOmXPWcxG2EeMauZcKQ7xl333F2B-qiXFyU37Es0MVQwGf9jOwKqLVtRcbAE2S98KzYVHggEFmOvRK3zRA_Ffh237vZUaK'
+  'AAAAEF7IeAI:APA91bES-M5i8WZncE8iXenYSGQygMkoIuzGnatTb0fFuRSOmXPWcxG2EeMauZcKQ7xl333F2B-qiXFyU37Es0MVQwGf9jOwKqLVtRcbAE2S98KzYVHggEFmOvRK3zRA_Ffh237vZUaK'
 var fcm = new FCM(serverKey)
 var geodist = require('geodist')
 var distance = require('google-distance')
 distance.apiKey = 'AIzaSyAHFcmgCyZoYYILOigaYE8G7FQCAA8vB80'
-const GoogleDistanceApi = require('google-distance-api');
+const GoogleDistanceApi = require('google-distance-api')
 
 const util = require('util')
 const captain = require('../Models/captain')
 const distancePromise = options =>
-    new Promise((resolve, reject) => {
-        try {
-            GoogleDistanceApi.distance(
-                options,
-                (err, result) => {
-                    if (err) {
-                        reject(err)
-                    } else {
-                        console.log(result)
-                        resolve(result)
-                    }
-                }
-            )
-        } catch (error) {
-            console.log(error)
+  new Promise((resolve, reject) => {
+    try {
+      GoogleDistanceApi.distance(options, (err, result) => {
+        if (err) {
+          reject(err)
+        } else {
+          console.log(result)
+          resolve(result)
         }
+      })
+    } catch (error) {
+      console.log(error)
+    }
 
-        /*distance.get(options, (err, data) => {
+    /*distance.get(options, (err, data) => {
             if (err) {
                 reject(err)
             } else {
                 resolve(data)
             }
         })*/
+  })
+//const distancePromise = util.promisify(distance.get)
 
-    })
-    //const distancePromise = util.promisify(distance.get)
+exports.addOrder = asyncHandler(async (req, res, next) => {
+  const orderr = await Order.create(req.body)
+  if (!orderr) {
+    return next(ErrorResponse('an error occured', 401))
+  }
 
-exports.addOrder = asyncHandler(async(req, res, next) => {
-    const orderr = await Order.create(req.body)
-    if (!orderr) {
-        return next(ErrorResponse('an error occured', 401))
-    }
+  let data = []
+  if (req.files) {
+    if (req.files.photos !== null) {
+      if (req.files.photos.length > 1) {
+        try {
+          req.files.photos.forEach(element => {
+            element.mv('./uploads/' + element.name)
 
-    let data = []
-    if (req.files) {
-        if (req.files.photos !== null) {
-            if (req.files.photos.length > 1) {
-                try {
-                    req.files.photos.forEach(element => {
-                            element.mv('./uploads/' + element.name)
-
-                            data.push(req.originalUrl + element.name)
-                        })
-                        //loop all files
-                        /*  forEach(keysIn(req.files.photos), key => {
+            data.push(req.originalUrl + element.name)
+          })
+          //loop all files
+          /*  forEach(keysIn(req.files.photos), key => {
             let photo = req.files.photos[key]
             console.log(photo)
 
@@ -69,243 +65,233 @@ exports.addOrder = asyncHandler(async(req, res, next) => {
             //push file details
             data.push(photo.name)
         })*/
-                } catch (err) {
-                    console.log(err)
-                }
-            } else {
-                let photo = req.files.photos
-                photo.mv('./uploads/' + photo.name)
-                data.push(req.originalUrl + photo.name)
-            }
+        } catch (err) {
+          console.log(err)
         }
+      } else {
+        let photo = req.files.photos
+        photo.mv('./uploads/' + photo.name)
+        data.push(req.originalUrl + photo.name)
+      }
     }
+  }
 
-    await orderr.update({
-            $push: { photos: { $each: data } }
-        }) //   { $addToSet: { tags: { $each: [ "camera", "accessories" ] } } }
+  await orderr.update({
+    $push: { photos: { $each: data } }
+  }) //   { $addToSet: { tags: { $each: [ "camera", "accessories" ] } } }
 
-    await orderr.save()
-    var message = {
-        //this may vary according to the message type (single recipient, multicast, topic, et cetera)
-        to: orderr.fcm,
-        collapse_key: 'your_collapse_key',
+  await orderr.save()
+  var message = {
+    //this may vary according to the message type (single recipient, multicast, topic, et cetera)
+    to: orderr.fcm,
+    collapse_key: 'your_collapse_key',
 
-        notification: {
-            title: 'تم طلب الاوردر',
-            body: orderr.description
-        },
+    notification: {
+      title: 'تم طلب الاوردر',
+      body: orderr.description
+    },
 
-        data: {
-            //you can send only notification or only data(or include both)
-            my_key: 'my value',
-            my_another_key: 'my another value'
-        }
+    data: {
+      //you can send only notification or only data(or include both)
+      my_key: 'my value',
+      my_another_key: 'my another value'
     }
-    await notification.create({
-        fcm: orderr.fcm,
-        userId: orderr.userId,
-        title: 'تم طلب الاوردر',
-        message: orderr.description
+  }
+  await notification.create({
+    fcm: orderr.fcm,
+    userId: orderr.userId,
+    title: 'تم طلب الاوردر',
+    message: orderr.description
+  })
+  try {
+    fcm.send(message, function (err, response) {
+      if (err) {
+        console.log('Something has gone wrong!')
+      } else {
+        console.log('Successfully sent with response: ', response)
+      }
     })
-    try {
-        fcm.send(message, function(err, response) {
-            if (err) {
-                console.log('Something has gone wrong!')
-            } else {
-                console.log('Successfully sent with response: ', response)
-            }
-        })
-    } catch (error) {
-        console.log(error)
+  } catch (error) {
+    console.log(error)
+  }
+
+  const captains = await captain.find({
+    location: {
+      $geoWithin: {
+        $centerSphere: [[orderr.userLat, orderr.userLng], 60000 / 3963]
+      }
     }
+  })
 
+  ///impliment sending message to each captain
 
-    const captains = await captain.find({
-        location: {
-            $geoWithin: {
-                $centerSphere: [
-                    [orderr.userLat, orderr.userLng], 60000 / 3963
-                ]
-            }
-        }
-    })
+  res.contentType('application/json')
 
-    ///impliment sending message to each captain 
-
-
-
-
-
-
-
-
-
-
-    res.contentType('application/json')
-
-    res.status(200).json({
-        success: true,
-        data: orderr
-    })
+  res.status(200).json({
+    success: true,
+    data: orderr
+  })
 })
 
-exports.getUserToPerson = asyncHandler(async(req, res) => {
-    const orders = await Order.find({
-        userId: req.params.id,
-        orderType: 'fromUserToPerson'
-    })
-    if (!orders) {
-        return next(new ErrorResponse(`coudn't get orders for this user`, 402))
-    }
+exports.getUserToPerson = asyncHandler(async (req, res) => {
+  const orders = await Order.find({
+    userId: req.params.id,
+    orderType: 'fromUserToPerson'
+  })
+  if (!orders) {
+    return next(new ErrorResponse(`coudn't get orders for this user`, 402))
+  }
 
-    res.status(200).send(orders)
+  res.status(200).send(orders)
 })
 
-exports.getShopToUser = asyncHandler(async(req, res, next) => {
-    const orders = await Order.find({
-        userId: req.params.id,
-        orderType: 'fromShopToUser'
-    })
-    if (!orders) {
-        return next(new ErrorResponse(`coudn't get orders for this user`, 402))
-    }
+exports.getShopToUser = asyncHandler(async (req, res, next) => {
+  const orders = await Order.find({
+    userId: req.params.id,
+    orderType: 'fromShopToUser'
+  })
+  if (!orders) {
+    return next(new ErrorResponse(`coudn't get orders for this user`, 402))
+  }
 
-    res.status(200).send(orders)
+  res.status(200).send(orders)
 })
 
-exports.updateOrder = asyncHandler(async(req, res, next) => {
-    const order = await Order.findById(req.params.id)
+exports.updateOrder = asyncHandler(async (req, res, next) => {
+  const order = await Order.findById(req.params.id)
 
-    if (!order) {
-        return next(new ErrorResponse('order not found', 404))
-    }
-    const newOrder = await order.update(req.body)
-    if (!newOrder) {
-        return next(new ErrorResponse('an error occured', 401))
-    }
-    res.status(200).json({
-        success: true,
-        data: newOrder
-    })
+  if (!order) {
+    return next(new ErrorResponse('order not found', 404))
+  }
+  const newOrder = await order.update(req.body)
+  if (!newOrder) {
+    return next(new ErrorResponse('an error occured', 401))
+  }
+  res.status(200).json({
+    success: true,
+    data: newOrder
+  })
 })
 
 /**
  * refactored code
  */
-const resolveData = async(data, order, origin) => {
-    const lat2 = order.userLat
-    const lang2 = order.userLng
+const resolveData = async (data, order, origin) => {
+  const lat2 = order.userLat
+  const lang2 = order.userLng
 
-    const subData = await distancePromise(
-        /*{
+  const subData = await distancePromise(
+    /*{
                 origin,
                 destination: `${lat2},${lang2}`
             }*/
-        {
-            key: 'AIzaSyAHFcmgCyZoYYILOigaYE8G7FQCAA8vB80',
-            origins: [origin],
-            destinations: [`${lat2},${lang2}`]
-        })
-
-
-    if (((subData[0].distanceValue / 1000) + (data[0].distanceValue / 1000)) < 60) {
-        return {
-            distanceToUser: subData[0].distanceValue,
-            distanceToShop: data[0].distanceValue,
-            duration: subData[0].durationValue + data[0].durationValue,
-            order: order
-        }
+    {
+      key: 'AIzaSyAHFcmgCyZoYYILOigaYE8G7FQCAA8vB80',
+      origins: [origin],
+      destinations: [`${lat2},${lang2}`]
     }
+  )
+
+  if (subData[0].distanceValue / 1000 + data[0].distanceValue / 1000 < 60) {
+    return {
+      distanceToUser: subData[0].distanceValue,
+      distanceToShop: data[0].distanceValue,
+      duration: subData[0].durationValue + data[0].durationValue,
+      order: order
+    }
+  }
 }
 
-const resolveOrder1 = async(order, origin) => {
-    const lat = order.recieverLat
-    const lang = order.recieverLng
-    const data = await distancePromise(
-        /*{
+const resolveOrder1 = async (order, origin) => {
+  const lat = order.recieverLat
+  const lang = order.recieverLng
+  const data = await distancePromise(
+    /*{
                 origin: origin,
                 destination: `${lat},${lang}`
             }*/
-        {
-            key: 'AIzaSyAHFcmgCyZoYYILOigaYE8G7FQCAA8vB80',
-            origins: [origin],
-            destinations: [`${lat},${lang}`]
-        })
-    console.log(data[0].distanceValue)
-    console.log((data[0].distanceValue / 1000) < 60)
-    if (data[0].distanceValue / 1000 < 60) {
-        return await resolveData(data, order, origin)
+    {
+      key: 'AIzaSyAHFcmgCyZoYYILOigaYE8G7FQCAA8vB80',
+      origins: [origin],
+      destinations: [`${lat},${lang}`]
     }
+  )
+  console.log(data[0].distanceValue)
+  console.log(data[0].distanceValue / 1000 < 60)
+  if (data[0].distanceValue / 1000 < 60) {
+    return await resolveData(data, order, origin)
+  }
 }
 
-const resolveOrder2 = async(order, origin) => {
-    const lat = order.shopLat
-    const lang = order.shopLng
+const resolveOrder2 = async (order, origin) => {
+  const lat = order.shopLat
+  const lang = order.shopLng
 
-    const data = await distancePromise(
-        /*{
+  const data = await distancePromise(
+    /*{
                 origin: origin,
                 destination: `${lat},${lang}`,
             }*/
-        {
-            key: 'AIzaSyAHFcmgCyZoYYILOigaYE8G7FQCAA8vB80',
-            origins: [origin],
-            destinations: [`${lat},${lang}`]
-        })
-    console.log(data)
-    if ((data[0].distanceValue / 1000) < 60) {
-        return await resolveData(data, order, origin)
+    {
+      key: 'AIzaSyAHFcmgCyZoYYILOigaYE8G7FQCAA8vB80',
+      origins: [origin],
+      destinations: [`${lat},${lang}`]
     }
+  )
+  console.log(data)
+  if (data[0].distanceValue / 1000 < 60) {
+    return await resolveData(data, order, origin)
+  }
 }
 
-exports.getCaptainOrders = asyncHandler(async(req, res, next) => {
-    const origin = `${req.body.lat},${req.body.lng}`
-    console.log(origin)
-    const filteredOrders = []
-    const orders = await Order.find({ condition: 'requested' }).sort({
-        requestTime: -1
+exports.getCaptainOrders = asyncHandler(async (req, res, next) => {
+  const origin = `${req.body.lat},${req.body.lng}`
+  console.log(origin)
+  const filteredOrders = []
+  const orders = await Order.find({ condition: 'requested' }).sort({
+    requestTime: -1
+  })
+  await Promise.all(
+    orders.map(async order => {
+      if (order.orderType == 'fromUserToPerson') {
+        const validOrder = await resolveOrder1(order, origin)
+        //console.log(validOrder || 'notValid order')
+        if (validOrder) filteredOrders.push(validOrder)
+      } else if (order.orderType == 'fromShopToUser') {
+        const validOrder = await resolveOrder2(order, origin)
+        // console.log(validOrder || 'notValid order')
+        if (validOrder) filteredOrders.push(validOrder)
+      }
     })
-    await Promise.all(
-        orders.map(async order => {
-            if (order.orderType == 'fromUserToPerson') {
-                const validOrder = await resolveOrder1(order, origin)
-                    //console.log(validOrder || 'notValid order')
-                if (validOrder) filteredOrders.push(validOrder)
-            } else if (order.orderType == 'fromShopToUser') {
-                const validOrder = await resolveOrder2(order, origin)
-                    // console.log(validOrder || 'notValid order')
-                if (validOrder) filteredOrders.push(validOrder)
-            }
-        })
-    )
-    res.status(200).send(filteredOrders)
+  )
+  res.status(200).send(filteredOrders)
 })
 
-exports.getInProgressOrders = asyncHandler(async(req, res, next) => {
-        const orders = await Order.find({
-            captainId: req.params.id
-        })
+exports.getInProgressOrders = asyncHandler(async (req, res, next) => {
+  const orders = await Order.find({
+    captainId: req.params.id
+  })
 
-        if (!orders) {
-            return res.status(200).send([])
-        }
-        res.status(200).send(orders)
-    })
-    // exports.getCaptainOrders = asyncHandler(async (req, res, next) => {
-    //   const orders = await Order.find({ condition: "requested" });
-    //   var filtered = new Array({
-    //     distanceToUser: 22,
-    //     distanceToShop: 21,
-    //     duration: 2442,
-    //     order: orders[0],
-    //   });
-    //   await Promise.all(
-    //     orders.map(async (order) => {
-    //       if (order.orderType == "fromUserToPerson") {
-    //         const lat = order.recieverLat;
-    //         const lang = order.recieverLng;
-    //         const lat2 = order.userLat;
-    //         const lang2 = order.userLng;
+  if (!orders) {
+    return res.status(200).send([])
+  }
+  res.status(200).send(orders)
+})
+// exports.getCaptainOrders = asyncHandler(async (req, res, next) => {
+//   const orders = await Order.find({ condition: "requested" });
+//   var filtered = new Array({
+//     distanceToUser: 22,
+//     distanceToShop: 21,
+//     duration: 2442,
+//     order: orders[0],
+//   });
+//   await Promise.all(
+//     orders.map(async (order) => {
+//       if (order.orderType == "fromUserToPerson") {
+//         const lat = order.recieverLat;
+//         const lang = order.recieverLng;
+//         const lat2 = order.userLat;
+//         const lang2 = order.userLng;
 
 //         await distance.get(
 //           {
