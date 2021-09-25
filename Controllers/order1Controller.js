@@ -29,12 +29,12 @@ const distancePromise = options =>
         }
 
         /*distance.get(options, (err, data) => {
-                    if (err) {
-                        reject(err)
-                    } else {
-                        resolve(data)
-                    }
-                })*/
+                        if (err) {
+                            reject(err)
+                        } else {
+                            resolve(data)
+                        }
+                    })*/
     })
     //const distancePromise = util.promisify(distance.get)
 
@@ -185,9 +185,9 @@ const resolveData = async(data, order, origin) => {
 
     const subData = await distancePromise(
         /*{
-                        origin,
-                        destination: `${lat2},${lang2}`
-                    }*/
+                            origin,
+                            destination: `${lat2},${lang2}`
+                        }*/
         {
             key: 'AIzaSyAHFcmgCyZoYYILOigaYE8G7FQCAA8vB80',
             origins: [origin],
@@ -210,9 +210,9 @@ const resolveOrder1 = async(order, origin) => {
     const lang = order.recieverLng
     const data = await distancePromise(
         /*{
-                        origin: origin,
-                        destination: `${lat},${lang}`
-                    }*/
+                            origin: origin,
+                            destination: `${lat},${lang}`
+                        }*/
         {
             key: 'AIzaSyAHFcmgCyZoYYILOigaYE8G7FQCAA8vB80',
             origins: [origin],
@@ -232,9 +232,9 @@ const resolveOrder2 = async(order, origin) => {
 
     const data = await distancePromise(
         /*{
-                        origin: origin,
-                        destination: `${lat},${lang}`,
-                    }*/
+                            origin: origin,
+                            destination: `${lat},${lang}`,
+                        }*/
         {
             key: 'AIzaSyAHFcmgCyZoYYILOigaYE8G7FQCAA8vB80',
             origins: [origin],
@@ -271,12 +271,20 @@ exports.getCaptainOrders = asyncHandler(async(req, res, next) => {
 })
 
 exports.getInProgressOrders = asyncHandler(async(req, res, next) => {
-        const orders = await Order.find({
+        const orderss = await Order.find({
             captainId: req.params.id
         })
 
-        if (!orders) {
+        if (!orderss) {
             return res.status(200).send([])
+        }
+        var orders = []
+        if (orderss.length > 0) {
+            orderss.forEach(order => {
+                if (order.condition !== 'delivered') {
+                    orders.push(order)
+                }
+            })
         }
         res.status(200).send(orders)
     })
