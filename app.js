@@ -47,6 +47,7 @@ const order = require('./Models/order')
 const vehicle = require('./Models/vehicle')
 const shop = require('./Models/shop')
 const asyncHandler = require('./utils/asynchandler')
+const receiptRotuer = require('./Routers/receiptRouter')
 
 
 app.use(errorHandler)
@@ -60,6 +61,7 @@ app.get('/', (req, res) => res.send('Hello World!'))
 app.use('/distance', distanceRoute)
 app.use('/notification', notificationRoute)
 app.use('/homePictures', homePicturesRouter)
+app.use('/receipts', receiptRotuer)
 
 mongoose.connect(
     'mongodb+srv://mahmoud:krMlPuh0eSLL26gf@cluster0.wshxs.mongodb.net/WegoDatabase?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true }
