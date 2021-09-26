@@ -16,15 +16,14 @@ receiptRotuer.get(
     })
 )
 
-
 receiptRotuer.post(
-        '/',
-        asyncHandler(async(req, res, next) => {
-            const receipt = await Receipt.create(req.body)
-            res.json({
-                receipt: receipt
-            })
+    '/',
+    asyncHandler(async(req, res, next) => {
+        const receipt = await Receipt.create(req.body)
+        res.json({
+            receipt: receipt
         })
+    })
+)
 
-
-        module.exports = receiptRotuer
+module.exports = receiptRotuer
