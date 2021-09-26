@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 const receiptSchema = new mongoose.Schema({
     orderId: {
         type: String,
+        unique: true,
         required: true
     },
     deliveryCost: {
